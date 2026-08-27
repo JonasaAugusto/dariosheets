@@ -180,26 +180,55 @@ input:focus, select:focus {
 input.texto { width: 100%; height: 52px; padding: 0 14px; font-size: 17px; }
 select { width: 100%; height: 52px; padding: 0 12px; font-size: 17px; }
 
-/* ---------- número com − e + ---------- */
-.stepper { display: flex; align-items: stretch; gap: 10px; }
-.stepper button {
-  flex: 0 0 auto; width: 54px;
-  border: 2px solid var(--ouro-300); background: #fff;
-  color: var(--ouro-700); font-size: 26px; font-weight: 600;
-  border-radius: var(--r-sm); cursor: pointer; line-height: 1;
-  transition: background var(--transicao), border-color var(--transicao);
+/* ---------- campo de valor ---------- */
+
+/* Os botões − e + saíram a pedido do Dário: num campo de preço, um toque a
+ * mais muda o valor cobrado e ele pode não perceber. Digitar é mais lento e
+ * mais consciente, que é o que se quer aqui. */
+
+input.valor {
+  font-size: 20px;
+  font-weight: 700;
+  /* Números alinhados não "dançam" ao mudar de valor, e ficam fáceis de
+     comparar entre um card e outro. */
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
-.stepper button:hover { background: var(--ouro-50); border-color: var(--ouro-500); }
-.stepper button:active { background: var(--ouro-100); }
-.stepper input {
-  flex: 1; min-width: 0; height: 54px;
-  text-align: center; font-size: 20px; font-weight: 700;
-  font-variant-numeric: tabular-nums;   /* números não "dançam" ao mudar */
+
+.com-prefixo {
+  display: flex;
+  align-items: stretch;
+  border: 2px solid var(--linha);
+  border-radius: var(--r-sm);
+  background: var(--papel);
+  overflow: hidden;
+  transition: border-color var(--transicao), background var(--transicao);
 }
-.prefixo {
-  display: flex; align-items: center; padding-left: 12px;
-  font-size: 16px; font-weight: 600; color: var(--tinta-40);
+.com-prefixo:focus-within { border-color: var(--ouro-600); background: #fff; }
+
+.prefixo-moeda {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ouro-800);
+  background: var(--ouro-50);
+  border-right: 1px solid var(--linha);
 }
+
+/* Dentro da caixa com prefixo o campo perde a borda própria: a borda é da
+   caixa, senão ficam duas linhas encostadas. */
+.com-prefixo input {
+  flex: 1;
+  min-width: 0;
+  height: 54px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.com-prefixo input:focus { outline: none; }
 
 /* ---------- botões ---------- */
 .btn {
@@ -314,8 +343,8 @@ img, svg, input, select, textarea, button { max-width: 100%; }
   main { padding: 16px 10px 20px; }
   .secao-titulo { font-size: 22px; }
   .card-corpo { padding: 4px 13px 14px; }
-  .stepper button { width: 50px; font-size: 24px; }
-  .stepper input, input.texto, select { height: 50px; }
+  input.texto, select, .com-prefixo input { height: 50px; }
+  input.valor { font-size: 19px; }
 }
 
 /* Celular estreito de verdade: rótulo da aba sai, ícone fica. Cinco palavras

@@ -15,7 +15,7 @@ const ESCOPO = "https://www.googleapis.com/auth/spreadsheets";
 let token = null;
 let clienteToken = null;
 let dados = {};          // { aba: [ [linha], ... ] }  incluindo cabeçalho
-let abaAtual = "precos_cidade";
+let abaAtual = "precos_km";
 
 /* Nada é salvo sozinho.
  *
@@ -50,70 +50,84 @@ const PREFIXO_ID = {
 };
 
 const ABAS = {
-  precos_cidade: {
-    titulo: "Dentro da cidade",
-    sub: "Quando a retirada e a entrega são na mesma cidade.",
-    icone: "🏙️",
-    ajuda: "O valor final soma tudo: partida + cada item + cada andar sem elevador.",
-    nomeCard: "cidade",
-    campos: [
-      { campo: "cidade",    rotulo: "Cidade",           tipo: "texto" },
-      { campo: "preco_base", rotulo: "Valor de partida", tipo: "dinheiro", passo: 10 },
-      { campo: "preco_por_item", rotulo: "Cada item",   tipo: "dinheiro", passo: 1 },
-      { campo: "preco_por_andar", rotulo: "Cada andar",  tipo: "dinheiro", passo: 5,
-        dica: "Só conta quando não tem elevador." },
-    ],
-  },
+  /* Ordem pedida pelo Dário. A primeira aba é a que ele mais mexe. */
   precos_km: {
-    titulo: "Para outra cidade",
-    sub: "Cobrança por quilômetro rodado, em faixas.",
+    titulo: "Preço por quilômetro",
+    sub: "Frete para fora da cidade, cobrado por distância.",
     icone: "🛣️",
-    ajuda: "Se uma faixa vai até 100 km, a próxima começa em 100. Sem buraco entre elas, senão um frete daquela distância fica sem preço.",
+    ajuda: "Uma linha por faixa de distância. Se uma vai até 100 km, a próxima começa em 100 — sem buraco entre elas, senão um frete daquela distância fica sem preço.",
     nomeCard: "faixa",
     campos: [
-      { campo: "km_min", rotulo: "De (km)",        tipo: "numero",   passo: 10 },
-      { campo: "km_max", rotulo: "Até (km)",       tipo: "numero",   passo: 10 },
-      { campo: "preco_por_km", rotulo: "Cada quilômetro", tipo: "dinheiro", passo: 0.5 },
-      { campo: "preco_minimo", rotulo: "Valor mínimo", tipo: "dinheiro", passo: 10,
-        dica: "Se a conta der menos, cobra isto. Sem mínimo? Deixe 0." },
+      { campo: "km_min", rotulo: "De quantos km", tipo: "numero" },
+      { campo: "km_max", rotulo: "Até quantos km", tipo: "numero" },
+      { campo: "preco_por_km", rotulo: "Preço de cada km", tipo: "dinheiro" },
+      { campo: "preco_minimo", rotulo: "Valor mínimo", tipo: "dinheiro",
+        dica: "Se a conta der menos que isto, cobra isto. Sem mínimo? Deixe 0." },
     ],
   },
+
+  nao_transporto: {
+    titulo: "O que eu não levo",
+    sub: "Cargas que você recusa.",
+    icone: "🚫",
+    ajuda: "A recusa acontece ANTES de falar qualquer preço. Cotar e voltar atrás é pior, porque o cliente já se apegou ao valor.",
+    nomeCard: "item",
+    campos: [
+      { campo: "termo", rotulo: "O que é", tipo: "texto",
+        dica: "A palavra que o cliente usaria. Ex: animais vivos" },
+      { campo: "motivo", rotulo: "Por que não leva", tipo: "texto",
+        dica: "É isto que eu digo ao cliente ao recusar." },
+    ],
+  },
+
+  precos_cidade: {
+    titulo: "Preço dentro da cidade",
+    sub: "Quando a retirada e a entrega são na mesma cidade.",
+    icone: "🏙️",
+    ajuda: "O valor final soma tudo: o de partida, mais cada item, mais cada andar sem elevador.",
+    nomeCard: "cidade",
+    campos: [
+      { campo: "cidade", rotulo: "Cidade", tipo: "texto" },
+      { campo: "preco_base", rotulo: "Valor de partida", tipo: "dinheiro",
+        dica: "Cobrado sempre, antes de somar o resto." },
+      { campo: "preco_por_item", rotulo: "Preço de cada item", tipo: "dinheiro" },
+      { campo: "preco_por_andar", rotulo: "Preço de cada andar", tipo: "dinheiro",
+        dica: "Só conta quando o prédio NÃO tem elevador." },
+    ],
+  },
+
   caminhoes: {
     titulo: "Meus caminhões",
     sub: "Qual veículo dá conta de quantos itens.",
     icone: "🚚",
-    ajuda: "O Dário escolhe sempre o menor caminhão que comporta a carga.",
+    ajuda: "Escolho sempre o menor caminhão que comporta a carga. Se nenhum comportar, eu não cobro por baixo: aviso que não dá.",
     nomeCard: "caminhão",
     campos: [
-      { campo: "caminhao",  rotulo: "Nome",           tipo: "texto" },
-      { campo: "max_itens", rotulo: "Cabe até",       tipo: "numero", passo: 5, sufixo: "itens" },
-      { campo: "observacao", rotulo: "Observação",    tipo: "texto" },
+      { campo: "caminhao", rotulo: "Nome do caminhão", tipo: "texto",
+        dica: "Como você chama ele. Ex: pequeno, baú, 3/4" },
+      { campo: "max_itens", rotulo: "Cabe até quantos itens", tipo: "numero" },
+      { campo: "observacao", rotulo: "Observação", tipo: "texto",
+        dica: "Livre. Só para você lembrar de algo." },
     ],
   },
+
+  /* Esta aba é a mais difícil de entender de fora, então é a que mais
+   * explica. O Dário vai reformular o painel com o Jonas; até lá, ela
+   * precisa se explicar sozinha. */
   fragilidade: {
-    titulo: "Coisa que quebra fácil",
-    sub: "Adicional para carga delicada.",
+    titulo: "Cobrança extra por carga delicada",
+    sub: "Quando a mudança tem coisa que quebra fácil.",
     icone: "🥂",
-    ajuda: "Pode ser uma porcentagem do total ou um valor fixo em reais.",
+    ajuda: "Cada linha é um nível de cuidado. Quando o cliente diz que tem louça, vidro, TV ou coisa parecida, eu somo esta cobrança no fim da conta. Se você não quer cobrar a mais por nada disso, deixe só uma linha com valor 0.",
     nomeCard: "nível",
     campos: [
-      { campo: "nivel", rotulo: "Nível",  tipo: "texto" },
-      { campo: "tipo",  rotulo: "Cobrar como", tipo: "escolha",
-        opcoes: [["percentual", "Porcentagem"], ["fixo", "Valor fixo"]] },
-      { campo: "valor", rotulo: "Quanto", tipo: "numero", passo: 5,
-        dica: "Porcentagem: escreva 10. Valor fixo: escreva 50,00." },
-    ],
-  },
-  nao_transporto: {
-    titulo: "O que eu não levo",
-    sub: "Cargas que o Dário recusa.",
-    icone: "🚫",
-    ajuda: "A recusa acontece ANTES de falar qualquer preço — cotar e voltar atrás é pior, porque o cliente já ancorou no valor.",
-    nomeCard: "item",
-    campos: [
-      { campo: "termo",  rotulo: "O que é",  tipo: "texto",
-        dica: "A palavra que o cliente usaria." },
-      { campo: "motivo", rotulo: "Por quê",  tipo: "texto" },
+      { campo: "nivel", rotulo: "Nome do nível", tipo: "texto",
+        dica: "Como você chama esse grau de cuidado. Ex: baixa, media, alta" },
+      { campo: "tipo", rotulo: "Cobrar como", tipo: "escolha",
+        opcoes: [["percentual", "Porcentagem do total"], ["fixo", "Valor fixo em reais"]],
+        dica: "Porcentagem sobe junto com o frete. Valor fixo é sempre o mesmo." },
+      { campo: "valor", rotulo: "Quanto cobrar", tipo: "numero",
+        dica: "Se escolheu porcentagem, escreva só o número: 10 quer dizer 10%. Se escolheu valor fixo, escreva em reais: 50,00" },
     ],
   },
 };
@@ -405,33 +419,63 @@ function montarLinha(campo, linha, i, indice, titulo, def) {
     return div;
   }
 
-  // número e dinheiro: botões − e + para não precisar do teclado
-  const passo = campo.passo || 1;
-  const box = document.createElement("div");
-  box.className = "stepper";
-  const menos = document.createElement("button"); menos.textContent = "−";
+  /* Número e dinheiro: só o campo.
+   *
+   * Antes havia botões − e + para ajustar sem abrir o teclado. Saíram a pedido
+   * do Dário: num campo de preço, um toque a mais muda o valor cobrado, e ele
+   * pode não perceber. Digitar é mais lento e mais consciente — que é o que se
+   * quer aqui.
+   *
+   * O valor é formatado ao SAIR do campo, não a cada tecla: formatar enquanto
+   * se digita faz o cursor pular e atrapalha mais do que ajuda. */
   const inp = document.createElement("input");
+  inp.className = "texto valor";
   inp.inputMode = "decimal";
-  inp.value = linha[i] || "";
-  const mais = document.createElement("button"); mais.textContent = "+";
+  inp.value = formatarParaTela(linha[i], campo.tipo);
+  if (campo.tipo === "dinheiro") inp.setAttribute("data-moeda", "");
 
   const numero = () => {
-    const n = parseFloat(String(inp.value).replace(/[^\d,.-]/g, "").replace(",", "."));
+    const bruto = String(inp.value).replace(/[^\d,.-]/g, "").replace(",", ".");
+    const n = parseFloat(bruto);
     return isNaN(n) ? 0 : n;
   };
-  const escrever = (n) => {
-    const texto = campo.tipo === "dinheiro"
-      ? n.toFixed(2).replace(".", ",")
-      : String(Math.round(n));
-    inp.value = texto; gravar(texto);
-  };
-  menos.onclick = () => escrever(Math.max(0, numero() - passo));
-  mais.onclick = () => escrever(numero() + passo);
-  inp.onchange = () => escrever(numero());
 
-  box.append(menos, inp, mais);
-  div.appendChild(box);
+  inp.onblur = () => {
+    const texto = campo.tipo === "dinheiro"
+      ? numero().toFixed(2).replace(".", ",")
+      : String(Math.round(numero()));
+    inp.value = formatarParaTela(texto, campo.tipo);
+    gravar(texto);
+  };
+  /* Enquanto digita, grava o que está escrito — sem reformatar. Assim o
+   * "não salvo" aparece na hora e o cursor fica onde está. */
+  inp.oninput = () => gravar(String(inp.value).replace(/^R\$\s*/, ""));
+
+  if (campo.tipo === "dinheiro") {
+    const caixa = document.createElement("div");
+    caixa.className = "com-prefixo";
+    const rs = document.createElement("span");
+    rs.className = "prefixo-moeda";
+    rs.textContent = "R$";
+    caixa.append(rs, inp);
+    div.appendChild(caixa);
+  } else {
+    div.appendChild(inp);
+  }
   return div;
+}
+
+/* Mostra o valor pronto para ler: 1.234,56 em vez de 1234.56.
+ * O prefixo R$ vem separado, para não entrar quando o Dário copia o campo. */
+function formatarParaTela(valor, tipo) {
+  const texto = String(valor ?? "").trim();
+  if (!texto) return "";
+  if (tipo !== "dinheiro") return texto;
+
+  const n = parseFloat(texto.replace(/\./g, "").replace(",", "."));
+  if (isNaN(n)) return texto;
+  return n.toLocaleString("pt-BR", { minimumFractionDigits: 2,
+                                     maximumFractionDigits: 2 });
 }
 
 function marcarAlterado() {
