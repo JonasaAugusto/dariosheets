@@ -345,3 +345,42 @@ img, svg, input, select, textarea, button { max-width: 100%; }
     transition-duration: .01ms !important; scroll-behavior: auto !important;
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * Barra de salvar
+ *
+ * Nada é salvo sozinho. A primeira versão salvava 1,2s depois da última
+ * tecla, e num aplicativo de preço isso é perigoso: um toque sem querer no
+ * "−" viraria desconto real no próximo orçamento, sem ninguém ver acontecer.
+ *
+ * Por isso a barra é destacada de propósito — fundo âmbar, borda visível. Ela
+ * não é um enfeite: é um aviso de que existe algo pendente.
+ * ------------------------------------------------------------------ */
+#barra-salvar {
+  margin-top: 22px;
+  padding: 16px;
+  border: 2px solid var(--ouro-500);
+  border-radius: var(--r-md);
+  background: var(--ouro-50);
+  box-shadow: var(--elev-2);
+  /* Fica visível ao rolar: a alteração pode ter sido no primeiro card e o
+     botão no fim da lista. */
+  position: sticky;
+  bottom: 84px;
+  z-index: 10;
+}
+#barra-salvar .aviso-alterado {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ouro-900);
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+#barra-salvar .aviso-alterado::before { content: "⚠️"; }
+#barra-salvar .btn + .btn { margin-top: 10px; }
+
+@media (max-width: 380px) {
+  #barra-salvar { padding: 13px; bottom: 78px; }
+}
