@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#8a6212">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Preços do Frete</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+<!-- Tela de entrada. Uma coisa só na tela: o botão. -->
+<section id="entrada">
+  <div class="marca">🚚</div>
+  <h2>Preços do Frete</h2>
+  <p>Toque no botão para entrar com sua conta do Google.</p>
+  <button class="btn" id="btn-entrar">Entrar com Google</button>
+  <p id="erro-entrada" style="color:#b3261e;font-weight:600"></p>
+</section>
+
+<!-- Aplicativo -->
+<div id="app" class="escondido">
+  <header>
+    <h1>Preços do Frete</h1>
+    <div class="conta" id="conta"></div>
+  </header>
+
+  <main id="conteudo"></main>
+
+  <nav id="abas">
+    <button data-aba="precos_cidade"  aria-selected="true"><span class="icone">🏙️</span>Cidade</button>
+    <button data-aba="precos_km"      aria-selected="false"><span class="icone">🛣️</span>Distância</button>
+    <button data-aba="caminhoes"      aria-selected="false"><span class="icone">🚚</span>Caminhões</button>
+    <button data-aba="fragilidade"    aria-selected="false"><span class="icone">🥂</span>Frágil</button>
+    <button data-aba="nao_transporto" aria-selected="false"><span class="icone">🚫</span>Não levo</button>
+  </nav>
+</div>
+
+<div id="aviso"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
