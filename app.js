@@ -24,8 +24,10 @@ let abaAtual = "precos_cidade";
  * ------------------------------------------------------------------ */
 const ABAS = {
   precos_cidade: {
-    titulo: "Frete dentro da cidade",
-    ajuda: "Some tudo: o valor de partida, mais cada item, mais cada andar sem elevador.",
+    titulo: "Dentro da cidade",
+    sub: "Quando a retirada e a entrega são na mesma cidade.",
+    icone: "🏙️",
+    ajuda: "O valor final soma tudo: partida + cada item + cada andar sem elevador.",
     nomeCard: "cidade",
     campos: [
       { campo: "cidade",    rotulo: "Cidade",           tipo: "texto" },
@@ -36,8 +38,10 @@ const ABAS = {
     ],
   },
   precos_km: {
-    titulo: "Frete para outra cidade",
-    ajuda: "Uma linha por faixa de distância. Se uma vai até 100 km, a próxima começa em 100 — sem buraco entre elas.",
+    titulo: "Para outra cidade",
+    sub: "Cobrança por quilômetro rodado, em faixas.",
+    icone: "🛣️",
+    ajuda: "Se uma faixa vai até 100 km, a próxima começa em 100. Sem buraco entre elas, senão um frete daquela distância fica sem preço.",
     nomeCard: "faixa",
     campos: [
       { campo: "km min", rotulo: "De (km)",        tipo: "numero",   passo: 10 },
@@ -49,7 +53,9 @@ const ABAS = {
   },
   caminhoes: {
     titulo: "Meus caminhões",
-    ajuda: "Escolho sempre o menor caminhão que dá conta da carga.",
+    sub: "Qual veículo dá conta de quantos itens.",
+    icone: "🚚",
+    ajuda: "O Dário escolhe sempre o menor caminhão que comporta a carga.",
     nomeCard: "caminhão",
     campos: [
       { campo: "caminhão",  rotulo: "Nome",           tipo: "texto" },
@@ -59,7 +65,9 @@ const ABAS = {
   },
   fragilidade: {
     titulo: "Coisa que quebra fácil",
-    ajuda: "Cobrança extra para carga delicada. Pode ser uma porcentagem do total ou um valor fixo.",
+    sub: "Adicional para carga delicada.",
+    icone: "🥂",
+    ajuda: "Pode ser uma porcentagem do total ou um valor fixo em reais.",
     nomeCard: "nível",
     campos: [
       { campo: "nível", rotulo: "Nível",  tipo: "texto" },
@@ -71,7 +79,9 @@ const ABAS = {
   },
   nao_transporto: {
     titulo: "O que eu não levo",
-    ajuda: "Recuso antes de falar preço. O motivo é o que eu digo ao cliente.",
+    sub: "Cargas que o Dário recusa.",
+    icone: "🚫",
+    ajuda: "A recusa acontece ANTES de falar qualquer preço — cotar e voltar atrás é pior, porque o cliente já ancorou no valor.",
     nomeCard: "item",
     campos: [
       { campo: "termo",  rotulo: "O que é",  tipo: "texto",
@@ -124,6 +134,7 @@ async function entrou() {
   document.getElementById("entrada").classList.add("escondido");
   document.getElementById("app").classList.remove("escondido");
   await carregarTudo();
+  mostrarPlanilha();
 }
 
 /* ------------------------------------------------------------------ *
@@ -145,7 +156,21 @@ async function chamar(caminho, opcoes = {}) {
   return r.json();
 }
 
+async function mostrarPlanilha() {
+  /* Mostra o NOME da planilha, não o e-mail.
+   *
+   * Pegar o e-mail exigiria o escopo `userinfo.email`, e escopo novo obriga o
+   * Dário a autorizar tudo de novo. O nome da planilha vem com o escopo que já
+   * temos e responde melhor à pergunta que ele faria: "estou mexendo na
+   * planilha certa?" */
+  try {
+    const r = await chamar("?fields=properties.title");
+    document.getElementById("conta").textContent = r.properties?.title || "";
+  } catch { /* nome é conveniência: se falhar, o app segue */ }
+}
+
 async function carregarTudo() {
+  esqueleto();
   avisar("Carregando…", "trabalhando");
   try {
     const faixas = Object.keys(ABAS).map((a) => `ranges=${encodeURIComponent(a)}!A1:Z200`).join("&");
@@ -187,20 +212,37 @@ function desenhar() {
 
   const el = document.getElementById("conteudo");
   el.innerHTML = `
-    <p class="titulo-secao">${def.titulo}</p>
-    <div class="ajuda">${def.ajuda}</div>
+    <h2 class="secao-titulo">${def.titulo}</h2>
+    <p class="secao-sub">${def.sub}</p>
+    <div class="ajuda"><span class="icone">💡</span><span>${def.ajuda}</span></div>
     <div id="cards"></div>
-    <button class="btn secundario" id="btn-add">+ Adicionar ${def.nomeCard}</button>
+    <button class="btn btn-contorno" id="btn-add">
+      <span>＋</span><span>Adicionar ${def.nomeCard}</span>
+    </button>
   `;
 
   const cards = el.querySelector("#cards");
-  corpo.forEach((linha, i) => cards.appendChild(montarCard(def, cabecalho, linha, i)));
+  if (corpo.length === 0) {
+    cards.innerHTML = `
+      <div class="vazio">
+        <div class="icone">${def.icone}</div>
+        <p>Nenhum${def.nomeCard === "cidade" || def.nomeCard === "faixa" ? "a" : ""}
+           ${def.nomeCard} cadastrad${def.nomeCard === "cidade" || def.nomeCard === "faixa" ? "a" : "o"} ainda.</p>
+      </div>`;
+  } else {
+    corpo.forEach((linha, i) => cards.appendChild(montarCard(def, cabecalho, linha, i)));
+  }
 
   el.querySelector("#btn-add").onclick = () => {
-    dados[abaAtual].push(new Array(cabecalho.length).fill(""));
+    dados[abaAtual].push(new Array(Math.max(cabecalho.length, 2)).fill(""));
     desenhar();
     window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
   };
+}
+
+function esqueleto() {
+  document.getElementById("conteudo").innerHTML =
+    '<div class="esqueleto"></div><div class="esqueleto"></div><div class="esqueleto"></div>';
 }
 
 function montarCard(def, cabecalho, linha, indice) {
@@ -209,36 +251,44 @@ function montarCard(def, cabecalho, linha, indice) {
 
   const primeiro = def.campos[0];
   const iPrim = cabecalho.indexOf(primeiro.campo);
-  const nome = (linha[iPrim] || "").trim() || `Novo ${def.nomeCard}`;
+  const nome = (linha[iPrim] || "").trim() || `Nov${def.nomeCard === "cidade" || def.nomeCard === "faixa" ? "a" : "o"} ${def.nomeCard}`;
 
-  const h = document.createElement("h3");
+  const topo = document.createElement("div");
+  topo.className = "card-topo";
+  topo.innerHTML = `<div class="numero">${indice + 1}</div><h3></h3>`;
+  const h = topo.querySelector("h3");
   h.textContent = nome;
-  card.appendChild(h);
+  card.appendChild(topo);
 
+  const corpo = document.createElement("div");
+  corpo.className = "card-corpo";
   def.campos.forEach((campo) => {
     const i = cabecalho.indexOf(campo.campo);
     if (i < 0) return;
-    card.appendChild(montarLinha(campo, linha, i, indice, h, def));
+    corpo.appendChild(montarLinha(campo, linha, i, indice, h, def));
   });
 
   const apagar = document.createElement("button");
-  apagar.className = "btn perigo";
+  apagar.className = "btn btn-apagar";
   apagar.textContent = `Apagar ${def.nomeCard}`;
   apagar.onclick = () => {
     if (!confirm(`Apagar "${nome}"?`)) return;
     dados[abaAtual].splice(indice + 1, 1);
     salvarAba(abaAtual).then(desenhar);
   };
-  card.appendChild(apagar);
+  corpo.appendChild(apagar);
+  card.appendChild(corpo);
   return card;
 }
 
 function montarLinha(campo, linha, i, indice, titulo, def) {
   const div = document.createElement("div");
-  div.className = "linha";
+  div.className = "campo";
 
   const lab = document.createElement("label");
-  lab.innerHTML = campo.rotulo + (campo.dica ? `<span class="dica">${campo.dica}</span>` : "");
+  lab.innerHTML = campo.rotulo
+    + (campo.tipo === "dinheiro" ? ' <span class="dica" style="display:inline">(em reais)</span>' : "")
+    + (campo.dica ? `<span class="dica">${campo.dica}</span>` : "");
   div.appendChild(lab);
 
   const gravar = (valor) => {
@@ -251,7 +301,6 @@ function montarLinha(campo, linha, i, indice, titulo, def) {
     const inp = document.createElement("input");
     inp.className = "texto"; inp.value = linha[i] || "";
     inp.oninput = () => gravar(inp.value);
-    div.style.flexDirection = "column"; div.style.alignItems = "stretch";
     div.appendChild(inp);
     return div;
   }
@@ -305,9 +354,12 @@ function agendarSalvar() {
   timerSalvar = setTimeout(() => salvarAba(abaAtual), 1200);
 }
 
+const ICONE_AVISO = { ok: "✅", erro: "⚠️", trabalhando: "⏳" };
+
 function avisar(texto, tipo) {
   const a = document.getElementById("aviso");
-  a.textContent = texto; a.className = tipo;
+  a.innerHTML = `<span>${ICONE_AVISO[tipo] || ""}</span><span>${texto}</span>`;
+  a.className = `${tipo} mostrando`;
 }
 function esconderAviso() { document.getElementById("aviso").className = ""; }
 
@@ -320,5 +372,13 @@ document.querySelectorAll("#abas button").forEach((b) => {
     window.scrollTo({ top: 0 });
   };
 });
+
+document.getElementById("btn-sair").onclick = () => {
+  if (!confirm("Sair da sua conta?")) return;
+  if (token && google?.accounts?.oauth2) google.accounts.oauth2.revoke(token, () => {});
+  token = null;
+  document.getElementById("app").classList.add("escondido");
+  document.getElementById("entrada").classList.remove("escondido");
+};
 
 window.addEventListener("load", iniciarLogin);

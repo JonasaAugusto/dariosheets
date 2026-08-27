@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#8a6212">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="description" content="Preços do frete — edite a tabela do robô Dário pelo celular.">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Preços do Frete</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>">
@@ -12,34 +13,41 @@
 </head>
 <body>
 
-<!-- Tela de entrada. Uma coisa só na tela: o botão. -->
+<!-- Entrada: uma coisa só na tela. -->
 <section id="entrada">
-  <div class="marca">🚚</div>
+  <div class="selo-grande">🚚</div>
   <h2>Preços do Frete</h2>
-  <p>Toque no botão para entrar com sua conta do Google.</p>
-  <button class="btn" id="btn-entrar">Entrar com Google</button>
-  <p id="erro-entrada" style="color:#b3261e;font-weight:600"></p>
+  <p>Aqui você ajusta os valores que o Dário usa para fazer os orçamentos.</p>
+  <button class="btn btn-primario" id="btn-entrar">Entrar com o Google</button>
+  <p id="erro-entrada" style="color:#a52519;font-weight:600;margin-top:14px"></p>
+  <p class="rodape">Seus dados ficam na sua planilha. Este site não guarda nada.</p>
 </section>
 
 <!-- Aplicativo -->
 <div id="app" class="escondido">
   <header>
-    <h1>Preços do Frete</h1>
-    <div class="conta" id="conta"></div>
+    <div class="topo">
+      <div class="selo">🚚</div>
+      <div style="min-width:0">
+        <h1>Preços do Frete</h1>
+        <div class="conta" id="conta"></div>
+      </div>
+      <button class="sair" id="btn-sair" title="Sair" aria-label="Sair">⏻</button>
+    </div>
   </header>
 
   <main id="conteudo"></main>
 
-  <nav id="abas">
-    <button data-aba="precos_cidade"  aria-selected="true"><span class="icone">🏙️</span>Cidade</button>
-    <button data-aba="precos_km"      aria-selected="false"><span class="icone">🛣️</span>Distância</button>
-    <button data-aba="caminhoes"      aria-selected="false"><span class="icone">🚚</span>Caminhões</button>
-    <button data-aba="fragilidade"    aria-selected="false"><span class="icone">🥂</span>Frágil</button>
-    <button data-aba="nao_transporto" aria-selected="false"><span class="icone">🚫</span>Não levo</button>
+  <nav id="abas" role="tablist">
+    <button role="tab" data-aba="precos_cidade"  aria-selected="true"><span class="icone">🏙️</span>Cidade</button>
+    <button role="tab" data-aba="precos_km"      aria-selected="false"><span class="icone">🛣️</span>Distância</button>
+    <button role="tab" data-aba="caminhoes"      aria-selected="false"><span class="icone">🚚</span>Caminhões</button>
+    <button role="tab" data-aba="fragilidade"    aria-selected="false"><span class="icone">🥂</span>Frágil</button>
+    <button role="tab" data-aba="nao_transporto" aria-selected="false"><span class="icone">🚫</span>Não levo</button>
   </nav>
 </div>
 
-<div id="aviso"></div>
+<div id="aviso" role="status" aria-live="polite"></div>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="config.js"></script>

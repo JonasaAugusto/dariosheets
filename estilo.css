@@ -1,227 +1,347 @@
-/* Preços do Frete — interface para celular.
+/* Preços do Frete — interface de celular.
  *
- * Quem usa isto é o Dário, num Samsung linha A, em pé, às vezes no sol, e não
- * tem vinte anos. Cada escolha aqui responde a isso:
+ * Duas exigências que normalmente brigam, e aqui não podem:
+ *   1. parecer um app moderno de verdade;
+ *   2. ser confortável para quem não tem vinte anos e usa no sol, em pé.
  *
- * - fonte base 18px (o padrão da web é 16, e 16 num celular no sol é pouco);
- * - alvo de toque nunca abaixo de 48px — é a medida do dedo, não do pixel;
- * - um card por regra, empilhado. Tabela em tela estreita obriga a rolar de
- *   lado, e foi exatamente o que reprovou a planilha;
- * - dourado ESCURO com texto branco. Dourado claro com cinza fica bonito no
- *   monitor e some no celular sob luz do dia;
- * - nada de cinza claro em texto. Contraste alto em tudo que é para ler.
+ * Onde elas brigam, a segunda ganha. Fonte grande e alvo de toque grande não
+ * são concessão de acessibilidade: são o que faz este app funcionar no caminhão.
+ * O acabamento vem de profundidade, ritmo e cor — não de encolher texto.
+ *
+ * Animação: só transição de estado, 120–180ms. Movimento decorativo em app de
+ * trabalho cansa e atrapalha quem tem tremor ou pouca visão.
  */
 
 :root {
-  --ouro: #8a6212;
-  --ouro-claro: #b8860b;
-  --ouro-fraco: #fdf5e0;
-  --creme: #fffcf2;
-  --grafite: #241f13;
-  --cinza: #6b6250;
-  --verde: #2e7d32;
-  --vermelho: #b3261e;
-  --borda: #e6dcc0;
-  --raio: 16px;
-  --sombra: 0 2px 8px rgba(60, 45, 10, .10);
+  /* Dourado em escala, não uma cor só. Escala é o que evita o efeito
+     "colori tudo de amarelo" e dá hierarquia de verdade. */
+  --ouro-900: #4a3608;
+  --ouro-800: #6b4d0e;
+  --ouro-700: #8a6212;
+  --ouro-600: #a87a1c;
+  --ouro-500: #c9963a;
+  --ouro-300: #e8cf94;
+  --ouro-100: #f7ecd2;
+  --ouro-50:  #fdf7e8;
+
+  --tinta:    #241f13;
+  --tinta-70: #5a5140;
+  --tinta-40: #8b8372;
+  --papel:    #fffdf8;
+  --cartao:   #ffffff;
+  --linha:    #ece0c4;
+
+  --verde:    #1f7a3d;
+  --verde-bg: #e8f5ec;
+  --rubi:     #a52519;
+  --rubi-bg:  #fdeceb;
+
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 24px;
+
+  /* Sombras em camadas: uma sombra só fica chapada. */
+  --elev-1: 0 1px 2px rgba(74, 54, 8, .06), 0 2px 6px rgba(74, 54, 8, .06);
+  --elev-2: 0 2px 4px rgba(74, 54, 8, .08), 0 8px 20px rgba(74, 54, 8, .10);
+  --elev-3: 0 4px 8px rgba(74, 54, 8, .10), 0 16px 40px rgba(74, 54, 8, .16);
+
+  --transicao: 150ms cubic-bezier(.2, .8, .3, 1);
 }
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+*, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body { max-width: 100%; overflow-x: hidden; }
 
 body {
   margin: 0;
-  font-family: -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+  font-family: "Segoe UI", -apple-system, Roboto, system-ui, sans-serif;
   font-size: 18px;
-  line-height: 1.5;
-  color: var(--grafite);
-  background: var(--creme);
-  padding-bottom: 90px;   /* espaço para a barra de abas fixa */
+  line-height: 1.55;
+  color: var(--tinta);
+  background: var(--papel);
+  padding-bottom: 96px;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- topo ---------- */
+/* Textura de fundo discreta: dá profundidade sem custar leitura. */
+body::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(900px 420px at 100% -10%, var(--ouro-50), transparent 70%),
+    radial-gradient(700px 360px at -10% 100%, #fdf3e2, transparent 70%);
+}
+
+/* ------------------------------------------------------------------ *
+ * Cabeçalho
+ * ------------------------------------------------------------------ */
 header {
-  background: var(--ouro);
+  position: sticky; top: 0; z-index: 30;
+  background: linear-gradient(135deg, var(--ouro-800) 0%, var(--ouro-600) 100%);
   color: #fff;
-  padding: 18px 16px 14px;
-  position: sticky; top: 0; z-index: 20;
-  box-shadow: var(--sombra);
+  padding: 20px 18px 18px;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  box-shadow: var(--elev-2);
 }
-header h1 { margin: 0; font-size: 22px; font-weight: 700; }
-header .conta { font-size: 14px; opacity: .9; margin-top: 2px; }
-
-/* ---------- abas ---------- */
-nav {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
-  display: flex; background: #fff;
-  border-top: 2px solid var(--borda);
-  box-shadow: 0 -2px 10px rgba(60, 45, 10, .10);
+header .topo { display: flex; align-items: center; gap: 12px; }
+header .selo {
+  width: 46px; height: 46px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 14px; font-size: 24px;
 }
-nav button {
-  flex: 1; border: 0; background: none;
-  padding: 10px 2px 12px;
-  font-size: 12px; font-weight: 600; color: var(--cinza);
-  min-height: 62px;                  /* alvo de toque generoso */
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  cursor: pointer;
+header h1 { margin: 0; font-size: 21px; font-weight: 700; letter-spacing: -.01em; }
+header .conta {
+  font-size: 13px; color: rgba(255, 255, 255, .82);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-nav button .icone { font-size: 22px; line-height: 1; }
-nav button[aria-selected="true"] { color: var(--ouro); }
-nav button[aria-selected="true"] .icone {
-  transform: scale(1.12); transition: transform .12s;
+header .sair {
+  margin-left: auto; flex: 0 0 auto;
+  width: 44px; height: 44px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  background: rgba(255, 255, 255, .10); color: #fff;
+  font-size: 17px; cursor: pointer;
 }
 
-/* ---------- conteúdo ---------- */
-main { padding: 16px 14px 20px; max-width: 640px; margin: 0 auto; }
-.titulo-secao { font-size: 15px; color: var(--cinza); margin: 0 0 4px; }
+/* ------------------------------------------------------------------ *
+ * Conteúdo
+ * ------------------------------------------------------------------ */
+main { padding: 20px 14px 24px; max-width: 620px; margin: 0 auto; }
+
+.secao-titulo {
+  font-size: 24px; font-weight: 700; letter-spacing: -.02em;
+  margin: 0 0 6px;
+}
+.secao-sub { font-size: 16px; color: var(--tinta-70); margin: 0 0 18px; }
+
 .ajuda {
-  background: var(--ouro-fraco);
-  border-left: 5px solid var(--ouro-claro);
-  border-radius: 10px;
-  padding: 12px 14px; margin: 0 0 18px;
-  font-size: 16px;
+  display: flex; gap: 12px; align-items: flex-start;
+  background: var(--ouro-50);
+  border: 1px solid var(--ouro-300);
+  border-radius: var(--r-md);
+  padding: 14px 16px; margin: 0 0 22px;
+  font-size: 16px; line-height: 1.5;
 }
+.ajuda .icone { font-size: 20px; line-height: 1.3; flex: 0 0 auto; }
 
+/* ---------- cartão ---------- */
 .card {
-  background: #fff; border: 2px solid var(--borda);
-  border-radius: var(--raio); padding: 14px;
-  margin-bottom: 14px; box-shadow: var(--sombra);
+  background: var(--cartao);
+  border: 1px solid var(--linha);
+  border-radius: var(--r-md);
+  box-shadow: var(--elev-1);
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: box-shadow var(--transicao);
 }
-.card h3 {
-  margin: 0 0 12px; font-size: 19px;
-  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+.card:focus-within { box-shadow: var(--elev-2); }
+
+.card-topo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, var(--ouro-50), #fff);
+  border-bottom: 1px solid var(--linha);
 }
-.card h3 input.titulo {
-  font-size: 19px; font-weight: 700; border: 0; border-bottom: 2px dashed var(--borda);
-  padding: 4px 0; width: 100%; background: none; color: var(--grafite);
+.card-topo .numero {
+  width: 30px; height: 30px; flex: 0 0 auto;
+  display: grid; place-items: center;
+  background: var(--ouro-700); color: #fff;
+  border-radius: 9px; font-size: 14px; font-weight: 700;
+}
+.card-topo h3 {
+  margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.01em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-corpo { padding: 6px 16px 16px; }
+
+/* ---------- campo ---------- */
+.campo { padding: 12px 0; border-bottom: 1px solid #f4ecdc; }
+.campo:last-of-type { border-bottom: 0; }
+.campo > label {
+  display: block; font-size: 16px; font-weight: 600;
+  color: var(--tinta); margin-bottom: 8px;
+}
+.campo .dica {
+  display: block; font-size: 14px; font-weight: 400;
+  color: var(--tinta-40); margin-top: 2px;
 }
 
-/* PADRÃO = EMPILHADO. Mobile primeiro, não desktop encolhido.
- *
- * Numa tela de 360px sobram ~304px dentro do card. O controle de número ocupa
- * 212px (48 + 104 + 48 + espaços), deixando 72px para o rótulo — "Valor de
- * partida" quebraria em três linhas ao lado de um campo de uma linha só.
- * Empilhado, o rótulo tem a largura inteira e o campo também.
- *
- * Lado a lado só a partir de 480px, onde sobra espaço de verdade. */
-.linha {
-  display: flex; flex-direction: column; align-items: stretch;
-  gap: 6px; margin: 14px 0;
+input, select {
+  font-family: inherit; color: var(--tinta);
+  background: var(--papel);
+  border: 2px solid var(--linha);
+  border-radius: var(--r-sm);
+  transition: border-color var(--transicao), background var(--transicao);
 }
-.linha label { font-size: 17px; font-weight: 600; }
-.linha .dica { display: block; font-size: 14px; color: var(--cinza); font-weight: 400; }
-
-@media (min-width: 480px) {
-  .linha { flex-direction: row; align-items: center; gap: 12px; }
-  .linha label { flex: 1; font-weight: 500; }
+input:focus, select:focus {
+  outline: none; border-color: var(--ouro-600); background: #fff;
 }
 
-/* ---------- campo com + e − ---------- */
-.stepper { display: flex; align-items: center; gap: 8px; }
+input.texto { width: 100%; height: 52px; padding: 0 14px; font-size: 17px; }
+select { width: 100%; height: 52px; padding: 0 12px; font-size: 17px; }
+
+/* ---------- número com − e + ---------- */
+.stepper { display: flex; align-items: stretch; gap: 10px; }
 .stepper button {
-  flex: 0 0 auto;
-  width: 52px; height: 52px;          /* medida do dedo, com folga */
-  border: 2px solid var(--ouro-claro); background: #fff;
-  color: var(--ouro); font-size: 26px; font-weight: 700;
-  border-radius: 12px; cursor: pointer; line-height: 1;
+  flex: 0 0 auto; width: 54px;
+  border: 2px solid var(--ouro-300); background: #fff;
+  color: var(--ouro-700); font-size: 26px; font-weight: 600;
+  border-radius: var(--r-sm); cursor: pointer; line-height: 1;
+  transition: background var(--transicao), border-color var(--transicao);
 }
-.stepper button:active { background: var(--ouro-fraco); }
+.stepper button:hover { background: var(--ouro-50); border-color: var(--ouro-500); }
+.stepper button:active { background: var(--ouro-100); }
 .stepper input {
-  /* Cresce para ocupar o que sobra: empilhado fica largo e fácil de tocar;
-     ao lado do rótulo, encolhe sem quebrar. */
-  flex: 1; min-width: 90px; max-width: 100%;
-  height: 52px; text-align: center;
-  font-size: 19px; font-weight: 600;
-  border: 2px solid var(--borda); border-radius: 12px;
-  background: var(--creme); color: var(--grafite);
+  flex: 1; min-width: 0; height: 54px;
+  text-align: center; font-size: 20px; font-weight: 700;
+  font-variant-numeric: tabular-nums;   /* números não "dançam" ao mudar */
 }
-input.texto {
-  width: 100%; height: 48px; padding: 0 12px; font-size: 17px;
-  border: 2px solid var(--borda); border-radius: 12px; background: var(--creme);
-}
-select {
-  height: 48px; font-size: 17px; padding: 0 10px;
-  border: 2px solid var(--borda); border-radius: 12px; background: var(--creme);
+.prefixo {
+  display: flex; align-items: center; padding-left: 12px;
+  font-size: 16px; font-weight: 600; color: var(--tinta-40);
 }
 
 /* ---------- botões ---------- */
 .btn {
-  display: block; width: 100%; min-height: 54px;
-  border: 0; border-radius: 14px;
-  font-size: 18px; font-weight: 700; cursor: pointer;
-  background: var(--ouro); color: #fff; margin-top: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 54px; padding: 0 18px;
+  border: 0; border-radius: var(--r-md);
+  font-family: inherit; font-size: 17px; font-weight: 700;
+  cursor: pointer; transition: transform var(--transicao), box-shadow var(--transicao);
 }
-.btn.secundario {
-  background: #fff; color: var(--ouro); border: 2px solid var(--ouro-claro);
+.btn:active { transform: translateY(1px); }
+.btn-primario {
+  background: linear-gradient(135deg, var(--ouro-700), var(--ouro-600));
+  color: #fff; box-shadow: var(--elev-2);
 }
-.btn.perigo { background: #fff; color: var(--vermelho); border: 2px solid var(--vermelho); }
-.btn:disabled { opacity: .5; }
+.btn-contorno {
+  background: #fff; color: var(--ouro-800);
+  border: 2px dashed var(--ouro-300);
+}
+.btn-contorno:hover { border-style: solid; background: var(--ouro-50); }
+.btn-apagar {
+  background: none; color: var(--rubi); border: 1px solid #f0cfcc;
+  min-height: 46px; font-size: 15px; margin-top: 10px;
+}
+.btn-apagar:hover { background: var(--rubi-bg); }
 
-/* ---------- avisos ---------- */
-#aviso {
-  position: fixed; left: 12px; right: 12px; bottom: 78px; z-index: 30;
-  padding: 14px 16px; border-radius: 12px;
-  font-size: 17px; font-weight: 600; color: #fff;
-  box-shadow: var(--sombra); display: none;
+/* ---------- barra de abas ---------- */
+nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
+  display: flex;
+  background: rgba(255, 253, 248, .96);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--linha);
+  padding-bottom: env(safe-area-inset-bottom);
 }
-#aviso.ok { background: var(--verde); display: block; }
-#aviso.erro { background: var(--vermelho); display: block; }
-#aviso.trabalhando { background: var(--ouro-claro); display: block; }
+nav button {
+  flex: 1; min-width: 0; min-height: 66px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 8px 2px;
+  border: 0; background: none; cursor: pointer;
+  font-family: inherit; font-size: 11.5px; font-weight: 600;
+  color: var(--tinta-40);
+  position: relative;
+  transition: color var(--transicao);
+}
+nav button .icone { font-size: 21px; line-height: 1; }
+nav button[aria-selected="true"] { color: var(--ouro-700); }
+/* Barra do indicador: estado, não enfeite. */
+nav button[aria-selected="true"]::before {
+  content: ""; position: absolute; top: 0; left: 22%; right: 22%;
+  height: 3px; border-radius: 0 0 3px 3px; background: var(--ouro-600);
+}
+
+/* ---------- estado vazio ---------- */
+.vazio {
+  text-align: center; padding: 34px 20px;
+  border: 2px dashed var(--ouro-300); border-radius: var(--r-md);
+  background: var(--ouro-50); margin-bottom: 16px;
+}
+.vazio .icone { font-size: 40px; }
+.vazio p { margin: 8px 0 0; color: var(--tinta-70); font-size: 16px; }
+
+/* ---------- esqueleto de carregamento ---------- */
+.esqueleto {
+  height: 128px; border-radius: var(--r-md); margin-bottom: 16px;
+  background: linear-gradient(100deg, #f3ead8 30%, #fbf5e8 50%, #f3ead8 70%);
+  background-size: 220% 100%;
+  animation: brilho 1.4s linear infinite;
+}
+@keyframes brilho { to { background-position: -220% 0; } }
+
+/* ---------- aviso ---------- */
+#aviso {
+  position: fixed; left: 14px; right: 14px; bottom: 84px; z-index: 40;
+  display: none; align-items: center; gap: 10px;
+  padding: 14px 16px; border-radius: var(--r-md);
+  font-size: 16px; font-weight: 600;
+  box-shadow: var(--elev-3);
+}
+#aviso.mostrando { display: flex; }
+#aviso.ok { background: var(--verde-bg); color: var(--verde); border: 1px solid #b8e0c4; }
+#aviso.erro { background: var(--rubi-bg); color: var(--rubi); border: 1px solid #f2c6c2; }
+#aviso.trabalhando { background: var(--ouro-100); color: var(--ouro-900); border: 1px solid var(--ouro-300); }
 
 /* ---------- entrada ---------- */
 #entrada {
-  min-height: 100dvh; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; text-align: center;
-  padding: 30px 24px; gap: 8px;
+  min-height: 100dvh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 32px 26px; gap: 6px;
 }
-#entrada .marca { font-size: 60px; }
-#entrada h2 { font-size: 26px; margin: 6px 0 0; }
-#entrada p { font-size: 17px; color: var(--cinza); margin: 0 0 20px; max-width: 320px; }
+#entrada .selo-grande {
+  width: 92px; height: 92px; display: grid; place-items: center;
+  font-size: 46px; border-radius: 28px; margin-bottom: 18px;
+  background: linear-gradient(135deg, var(--ouro-700), var(--ouro-500));
+  box-shadow: var(--elev-3);
+}
+#entrada h2 { font-size: 28px; font-weight: 800; letter-spacing: -.03em; margin: 0; }
+#entrada p { font-size: 17px; color: var(--tinta-70); margin: 6px 0 26px; max-width: 300px; }
 #entrada .btn { max-width: 320px; }
+#entrada .rodape { margin-top: 22px; font-size: 14px; color: var(--tinta-40); max-width: 300px; }
 
 .escondido { display: none !important; }
 
-
-/* ---------- trava de responsividade ---------- */
-
-/* Nada, em hipótese alguma, empurra a página para o lado. Um único elemento
- * mais largo que a tela cria rolagem horizontal no documento inteiro, e num
- * celular isso destrói a navegação. */
-html, body { max-width: 100%; overflow-x: hidden; }
+/* ------------------------------------------------------------------ *
+ * Responsividade — o motivo de existir deste arquivo
+ * ------------------------------------------------------------------ */
 img, svg, input, select, textarea, button { max-width: 100%; }
 .card, .ajuda, main { min-width: 0; }
 
-/* Telas bem estreitas (Galaxy A entre outros, ~360px de largura CSS). */
+/* Galaxy linha A e vizinhos (~360px de largura CSS). */
 @media (max-width: 380px) {
   body { font-size: 17px; }
-  main { padding: 14px 10px 18px; }
-  .card { padding: 12px; }
-  nav button { font-size: 11px; }
-  nav button .icone { font-size: 20px; }
-  .stepper button { width: 48px; height: 48px; font-size: 24px; }
-  .stepper input { height: 48px; }
+  main { padding: 16px 10px 20px; }
+  .secao-titulo { font-size: 22px; }
+  .card-corpo { padding: 4px 13px 14px; }
+  .stepper button { width: 50px; font-size: 24px; }
+  .stepper input, input.texto, select { height: 50px; }
 }
 
-/* Telas muito estreitas de verdade (320px, celular antigo). O rótulo da aba
- * some e fica só o ícone: cinco palavras nessa largura viram sopa de letra. */
-@media (max-width: 330px) {
+/* Celular estreito de verdade: rótulo da aba sai, ícone fica. Cinco palavras
+   nessa largura viram sopa de letra. */
+@media (max-width: 340px) {
   nav button { font-size: 0; gap: 0; }
   nav button .icone { font-size: 24px; }
 }
 
-/* Tela deitada: a barra de abas inteira comeria metade da altura útil. */
+/* Deitado com pouca altura: a barra fixa comeria metade da tela útil. */
 @media (orientation: landscape) and (max-height: 460px) {
-  nav { position: static; }
+  nav { position: static; backdrop-filter: none; }
   body { padding-bottom: 16px; }
-  #aviso { bottom: 12px; }
+  #aviso { bottom: 14px; }
+  header { position: static; }
 }
 
-/* Tablet ou celular grande: limita a largura para a linha de texto não ficar
- * comprida demais e cansativa de ler. */
-@media (min-width: 700px) {
-  main { max-width: 680px; }
+/* Tela grande: limita a linha de texto, senão fica cansativo de ler. */
+@media (min-width: 680px) {
+  main { max-width: 640px; padding-top: 26px; }
 }
 
-/* Respeita quem aumentou a fonte do sistema — comum em quem enxerga menos. */
+/* Quem pediu menos movimento, recebe menos movimento. */
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; scroll-behavior: auto !important; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
+  }
 }
