@@ -211,7 +211,7 @@
         // A linha sumiu debaixo do formulário: alguém recarregou a planilha
         // enquanto isto estava aberto. Gravar em posição adivinhada seria pior
         // que não gravar, mas SUMIR EM SILÊNCIO é o que não se faz.
-        avisar("A lista mudou. Confira em salvas e tente de novo.", "erro", 4000);
+        avisar("A lista mudou enquanto você editava. Abra as salvas e tente de novo.", "erro", 5000);
         limparRascunho();
         return;
       }
@@ -279,7 +279,7 @@
            cadastrar a mesma cidade duas vezes. -->
       <button type="button" class="ver-salvas" onclick={() => (salvosAberto = true)}>
         <List size={19} strokeWidth={2.2} />
-        {def.nomeCard === "viagem" ? "Viagens salvas" : `${def.nomeCard}s salvas`}
+        {def.salvos}
         <span class="contador">{corpo.length}</span>
       </button>
     {/if}
@@ -296,7 +296,7 @@
             <strong>Salvo!</strong>
             <p>Para editar ou apagar, toque em
               <button type="button" class="link" onclick={() => (salvosAberto = true)}
-              >{def.nomeCard === "viagem" ? "Viagens salvas" : `${def.nomeCard}s salvas`}</button>.
+              >{def.salvos}</button>.
             </p>
           </div>
         </div>

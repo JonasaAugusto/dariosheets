@@ -24,9 +24,9 @@
        preso numa tela. -->
   <div class="fundo" onclick={onfechar} role="presentation"></div>
 
-  <div class="folha" role="dialog" aria-modal="true" aria-label="{def.nomeCard}s salvas">
+  <div class="folha" role="dialog" aria-modal="true" aria-label={def.salvos}>
     <header>
-      <h2>{def.nomeCard}s salvas</h2>
+      <h2>{def.salvos}</h2>
       <button type="button" class="fechar" onclick={onfechar} aria-label="Fechar">
         <X size={22} strokeWidth={2.2} />
       </button>

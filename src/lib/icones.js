@@ -10,7 +10,7 @@
  * nunca foi ícone, só parecia.
  */
 export {
-  Route, Ban, Building2, Truck, Wine, Circle, MapPin,
+  Route, Ban, Building2, Truck, Wine, Circle, MapPin, Map,
   Plus, Trash2, Check, Loader2, X, Pencil, List,
   TriangleAlert, CircleCheck, RefreshCw,
 } from "@lucide/svelte";

@@ -16,22 +16,51 @@
  *   unico  uma regra só, formulário direto na tela (preço por km)
  *   lista  várias regras: formulário de adicionar + modal com as salvas
  *
+ * `salvos` é escrito à mão, e não `nomeCard + "s"`, porque o português não
+ * pluraliza por concatenação: sairia "caminhãos salvas", "nívels", "items".
+ * O adjetivo também precisa concordar em gênero — "bairros salvos" e
+ * "cidades salvas".
+ *
  * O `lista` existe porque a tela ficava um paredão de cards. Agora ela mostra
  * o que você está fazendo AGORA, e o que já está salvo fica a um toque.
  */
 export const ABAS = {
   /* Ordem pedida pelo Dário: cidade em segundo, "não levo" por último. */
   precos_km: {
-    titulo: "Preço por quilômetro",
-    sub: "Para cidade que você ainda não cadastrou.",
+    titulo: "Meus valores",
+    sub: "As contas que eu uso quando não há preço fechado.",
     icone: "Route",
     tipo: "unico",
-    ajuda: "Quando a mudança sai de Juiz de Fora para uma cidade que não está na aba de viagens, eu cobro por quilômetro rodado. Se a cidade estiver lá, o preço de lá vale e este aqui nem é usado.",
-    nomeCard: "km",
+    ajuda: "Estes valores são a base de tudo. Quando existe um preço fechado para a cidade ou para o bairro, é ele que vale, e os daqui nem entram na conta.",
+    nomeCard: "valor",
+    salvos: "valores salvos",
     campos: [
-      { campo: "preco_por_km", rotulo: "Valor de cada km rodado", tipo: "dinheiro" },
+      { campo: "preco_geral_jf", rotulo: "Frete dentro de Juiz de Fora", tipo: "dinheiro",
+        dica: "O que você cobra numa mudança dentro de Juiz de Fora, quando o bairro não tem preço próprio." },
+      { campo: "preco_por_km", rotulo: "Valor de cada km rodado", tipo: "dinheiro",
+        dica: "Para fora da cidade, quando o destino ainda não está cadastrado em Viagens." },
       { campo: "preco_minimo", rotulo: "Valor mínimo da viagem", tipo: "dinheiro",
-        dica: "Se a conta der menos que isto, cobro isto. Sem mínimo? Deixe zero." },
+        dica: "Se a conta der menos que esse valor, eu cobro ele mesmo. Sem mínimo? Deixe zero." },
+      { campo: "desconto_percentual", rotulo: "Desconto que eu posso dar (%)", tipo: "numero",
+        dica: "Se o cliente pedir desconto, é até onde eu posso ir sozinha. Deixe zero e eu falo com você antes, sempre." },
+      { campo: "desconto_condicao", rotulo: "Quando eu posso dar esse desconto", tipo: "texto",
+        dica: "Escreva com suas palavras. Ex: só a partir de R$ 800, ou só de segunda a quinta." },
+    ],
+  },
+
+  precos_bairro: {
+    titulo: "Preço por bairro",
+    sub: "Ruas e bairros de Juiz de Fora que têm valor próprio.",
+    icone: "Map",
+    tipo: "lista",
+    ajuda: "Quando o endereço cai num bairro que está aqui, eu uso esse valor. Se não estiver, eu uso o frete geral da cidade. Cada dúvida que eu te mandar no grupo e você responder vira uma linha nova aqui, automaticamente.",
+    nomeCard: "bairro",
+    salvos: "bairros salvos",
+    resumo: ["bairro", "preco"],
+    campos: [
+      { campo: "bairro", rotulo: "Bairro ou rua", tipo: "texto",
+        dica: "Ex: Santa Rita, Avenida Rio Branco, Getúlio Vargas." },
+      { campo: "preco", rotulo: "Quanto você cobra", tipo: "dinheiro" },
     ],
   },
 
@@ -42,6 +71,7 @@ export const ABAS = {
     tipo: "lista",
     ajuda: "O valor final soma tudo: o de partida, mais cada item, mais cada andar sem elevador.",
     nomeCard: "cidade",
+    salvos: "cidades salvas",
     resumo: ["cidade", "preco_base"],
     campos: [
       { campo: "cidade", rotulo: "Cidade", tipo: "texto" },
@@ -58,8 +88,9 @@ export const ABAS = {
     sub: "O preço fechado de Juiz de Fora até cada cidade.",
     icone: "MapPin",
     tipo: "lista",
-    ajuda: "Aqui é o preço que você já sabe de cor: Juiz de Fora até Belo Horizonte custa tanto. Vale mais que a conta por quilômetro, porque já tem pedágio, estrada e volta embutidos. Cidade que estiver aqui, eu coto na hora.",
+    ajuda: "Aqui é o preço que você já sabe de cor: Juiz de Fora até Belo Horizonte custa tanto. Vale mais que a conta por quilômetro, porque já inclui o pedágio, a estrada e a volta. Cidade que estiver aqui, eu coto na hora.",
     nomeCard: "viagem",
+    salvos: "viagens salvas",
     resumo: ["destino", "preco"],
     campos: [
       { campo: "destino", rotulo: "Para qual cidade", tipo: "texto",
@@ -75,12 +106,13 @@ export const ABAS = {
     sub: "Qual veículo dá conta de quantos itens.",
     icone: "Truck",
     tipo: "lista",
-    ajuda: "Escolho sempre o menor caminhão que comporta a carga. Se nenhum comportar, eu não cobro por baixo: aviso que não dá.",
+    ajuda: "Escolho sempre o menor caminhão que comporta a carga. Se nenhum comportar, eu não espremo a carga: aviso que não dá.",
     nomeCard: "caminhão",
+    salvos: "caminhões salvos",
     resumo: ["caminhao", "max_itens"],
     campos: [
       { campo: "caminhao", rotulo: "Nome do caminhão", tipo: "texto",
-        dica: "Como você chama ele. Ex: pequeno, baú, 3/4" },
+        dica: "O nome que você usa pra ele. Ex: pequeno, baú, 3/4" },
       { campo: "max_itens", rotulo: "Cabe até quantos itens", tipo: "numero" },
       { campo: "observacao", rotulo: "Observação", tipo: "texto",
         dica: "Livre. Só para você lembrar de algo." },
@@ -95,12 +127,13 @@ export const ABAS = {
     sub: "Quando a mudança tem coisa que quebra fácil.",
     icone: "Wine",
     tipo: "lista",
-    ajuda: "Cada linha é um nível de cuidado. Quando o cliente diz que tem louça, vidro, TV ou coisa parecida, eu somo esta cobrança no fim da conta. Se você não quer cobrar a mais por nada disso, deixe só uma linha com valor 0.",
+    ajuda: "Cada linha é um nível de cuidado. Quando o cliente diz que tem louça, vidro, TV ou coisa parecida, eu somo essa cobrança no fim da conta. Se você não quer cobrar a mais por nada disso, deixe só uma linha com valor 0.",
     nomeCard: "nível",
+    salvos: "níveis salvos",
     resumo: ["nivel", "valor"],
     campos: [
       { campo: "nivel", rotulo: "Nome do nível", tipo: "texto",
-        dica: "Como você chama esse grau de cuidado. Ex: baixa, media, alta" },
+        dica: "Como você chama esse grau de cuidado. Ex: baixa, média, alta" },
       { campo: "tipo", rotulo: "Cobrar como", tipo: "escolha",
         opcoes: [["percentual", "Porcentagem do total"], ["fixo", "Valor fixo em reais"]],
         dica: "Porcentagem sobe junto com o frete. Valor fixo é sempre o mesmo." },
@@ -116,12 +149,13 @@ export const ABAS = {
     tipo: "lista",
     ajuda: "A recusa acontece ANTES de falar qualquer preço. Cotar e voltar atrás é pior, porque o cliente já se apegou ao valor.",
     nomeCard: "item",
+    salvos: "itens salvos",
     resumo: ["termo", "motivo"],
     campos: [
       { campo: "termo", rotulo: "O que é", tipo: "texto",
         dica: "A palavra que o cliente usaria. Ex: animais vivos" },
       { campo: "motivo", rotulo: "Por que não leva", tipo: "texto",
-        dica: "É isto que eu digo ao cliente ao recusar." },
+        dica: "É isso que eu digo ao cliente quando recuso." },
     ],
   },
 };
@@ -138,5 +172,6 @@ export const CONTROLE = ["id", "ativo"];
 
 export const PREFIXO_ID = {
   precos_cidade: "cid", precos_km: "km", precos_rota: "rot",
-  caminhoes: "cam", fragilidade: "fra", nao_transporto: "nao",
+  precos_bairro: "bai", caminhoes: "cam", fragilidade: "fra",
+  nao_transporto: "nao",
 };
