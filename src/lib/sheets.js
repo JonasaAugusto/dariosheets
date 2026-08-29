@@ -109,7 +109,16 @@ export async function lerTudo(sheetId, abas) {
   const faixas = abas
     .map((a) => `ranges=${encodeURIComponent(a)}!A1:Z200`)
     .join("&");
-  const r = await chamar(sheetId, `/values:batchGet?${faixas}`);
+  // UNFORMATTED_VALUE: número volta como NÚMERO, não como texto formatado.
+  //
+  // Sem isto o Sheets devolve "R$ 2,50" quando a célula está formatada como
+  // moeda, e aí o app tem que adivinhar se o ponto é decimal ou milhar. Foi
+  // essa adivinhação que fazia R$ 2,50 virar R$ 25,00 na tela.
+  //
+  // Adivinhar formato de dinheiro é errar metade das vezes. Melhor não ter
+  // o que adivinhar.
+  const r = await chamar(
+    sheetId, `/values:batchGet?${faixas}&valueRenderOption=UNFORMATTED_VALUE`);
   const fora = {};
   abas.forEach((aba, i) => {
     fora[aba] = r.valueRanges[i].values || [];
@@ -118,6 +127,9 @@ export async function lerTudo(sheetId, abas) {
 }
 
 export async function salvarAba(sheetId, aba, linhas) {
+  // USER_ENTERED com número de verdade no payload: o Sheets guarda número.
+  // Se fosse string, ele reinterpretaria conforme o idioma da planilha, e uma
+  // célula numérica viraria texto sem ninguém pedir.
   await chamar(
     sheetId,
     `/values/${encodeURIComponent(aba)}!A1:Z200?valueInputOption=USER_ENTERED`,

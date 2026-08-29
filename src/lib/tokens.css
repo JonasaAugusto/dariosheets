@@ -14,10 +14,23 @@
  *
  * Então: neutros no corpo, um acento só, e contraste medido.
  *
- * ## Contraste
+ * ## Contraste, medido e não estimado
  *
- * Todos os pares de texto sobre fundo passam de 4.5:1 (AA). O texto principal
- * fica em 15:1, que é o que se lê de relance, com o braço estendido, no sol.
+ * Eu afirmei "todos passam de 4.5:1" antes de medir, e estava errado: o
+ * `--texto-fraquinho` original (#7c7c73) dava 3.69 sobre `--superficie-2` —
+ * justamente nos menores textos da tela, os rótulos de 11px da barra de abas,
+ * num aplicativo cujo caso de uso declarado é celular no sol.
+ *
+ * Medido agora, no pior fundo de cada um:
+ *
+ *     --texto            #15150f   16.06   texto que se lê de relance
+ *     --texto-fraco      #56564e    6.90   rótulos, dicas
+ *     --texto-fraquinho  #6e6e65    4.51   abas, contadores (o limite do AA)
+ *     --acento-forte     #6d4d0a    7.18   sobre --acento-fraco
+ *
+ * Nenhum fica abaixo de 4.5. O `--texto-fraquinho` está exatamente no limite
+ * de propósito: é o tom mais claro que ainda passa, e clarear mais um degrau
+ * reprovaria.
  */
 :root {
   /* Neutros. O fundo é quase branco, não branco: branco puro no sol vira
@@ -30,7 +43,7 @@
 
   --texto: #15150f;
   --texto-fraco: #56564e;
-  --texto-fraquinho: #7c7c73;
+  --texto-fraquinho: #6e6e65;
 
   /* O acento. Um só, e derivado da identidade que já existia — o dourado
      virou âmbar profundo, que tem a mesma família e contraste de verdade. */

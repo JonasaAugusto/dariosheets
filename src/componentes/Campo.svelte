@@ -1,78 +1,98 @@
 <script>
-  import { Minus, Plus } from "../lib/icones.js";
-  import { paraTela, passo, somar } from "../lib/planilha.js";
+  import { mascaraDinheiro, mascaraInteiro, paraTela } from "../lib/planilha.js";
 
   let { def, valor = "", onchange } = $props();
 
-  const numerico = $derived(def.tipo === "numero" || def.tipo === "dinheiro");
+  // `$props.id()` em vez de sortear: estável entre renderizações, e único
+  // por instância. Sorteio no corpo do componente muda a cada render e
+  // quebraria a ligação `for`/`id` do rótulo.
+  const id = $props.id();
+
+  // O que aparece no campo é DERIVADO do valor, sem estado local.
+  //
+  // Isso só funciona porque a máscara é idempotente: o texto que ela produz,
+  // convertido para o valor e formatado de volta, dá exatamente o mesmo
+  // texto. Digitar "250" mostra "2,50", guarda 2.5, e 2.5 formata como
+  // "2,50".
+  //
+  // Sem essa propriedade seria preciso estado local, e estado local espelhando
+  // prop é a receita de input que dessincroniza: o DOM fica com o texto cru
+  // enquanto o app acha que formatou.
   const mostrado = $derived(paraTela(valor, def.tipo));
 
-  function ajustar(sinal) {
-    onchange(somar(valor, sinal * passo(def.tipo), def.tipo));
-    // Feedback tátil. Ajustar preço com o polegar, em pé, sem olhar o número
-    // a cada toque, é a diferença entre corrigir na hora e deixar pra depois.
-    navigator.vibrate?.(8);
+  function digitou(e) {
+    const cru = e.currentTarget.value;
+
+    if (def.tipo === "dinheiro") {
+      // A máscara roda a cada tecla: só os dígitos contam, e o último par é
+      // sempre os centavos. É o comportamento de aplicativo de banco, e é o
+      // único que não exige acertar a vírgula com o polegar, em pé, no sol.
+      const m = mascaraDinheiro(cru);
+      onchange(m.centavos === null ? "" : m.centavos / 100);
+    } else if (def.tipo === "numero") {
+      const m = mascaraInteiro(cru);
+      onchange(m.numero === null ? "" : m.numero);
+    } else {
+      onchange(cru);
+    }
+
+    // O DOM é reescrito pelo `mostrado` derivado na próxima renderização.
+    // Mas o CURSOR não volta sozinho: sem isto ele pula para o começo a cada
+    // tecla, porque o texto mudou de tamanho ao ganhar a vírgula.
+    //
+    // Fim da linha é onde ele tem que ficar: a máscara só cresce pela
+    // direita, então digitar é sempre acrescentar no fim.
+    const campo = e.currentTarget;
+    queueMicrotask(() => {
+      const n = campo.value.length;
+      try { campo.setSelectionRange(n, n); } catch { /* select não tem */ }
+    });
   }
 </script>
 
-<label class="campo">
-  <span class="rotulo">{def.rotulo}</span>
+<div class="campo">
+  <!-- O `for`/`id` é explícito, e não `<label>` envolvendo tudo.
+       Envolvendo, o rótulo se associa ao PRIMEIRO elemento rotulável dentro
+       dele, e tocar no texto do rótulo disparava um clique nesse elemento. -->
+  <label class="rotulo" for={id}>{def.rotulo}</label>
 
   {#if def.tipo === "escolha"}
-    <select value={valor} onchange={(e) => onchange(e.currentTarget.value)}>
+    <select {id} value={valor} onchange={(e) => onchange(e.currentTarget.value)}>
       {#each def.opcoes as [v, texto]}
         <option value={v}>{texto}</option>
       {/each}
     </select>
   {:else}
-    <div class="linha" class:com-botoes={numerico}>
-      {#if numerico}
-        <button type="button" onclick={() => ajustar(-1)}
-                aria-label="Diminuir {def.rotulo}">
-          <Minus size={22} strokeWidth={2.6} />
-        </button>
+    <div class="entrada">
+      {#if def.tipo === "dinheiro"}
+        <!-- O R$ fica FORA do campo: dentro, iria junto quando o Dário
+             copiasse o valor, e voltaria pra planilha como texto. -->
+        <span class="moeda" aria-hidden="true">R$</span>
       {/if}
-
-      <div class="entrada">
-        {#if def.tipo === "dinheiro"}
-          <!-- O R$ fica FORA do campo. Dentro, ele iria junto quando o Dário
-               copiasse o valor, e voltaria pra planilha como texto. -->
-          <span class="moeda" aria-hidden="true">R$</span>
-        {/if}
-        <input
-          value={mostrado}
-          type={numerico ? "text" : "text"}
-          inputmode={numerico ? "decimal" : "text"}
-          enterkeyhint="done"
-          onblur={(e) => onchange(e.currentTarget.value)}
-          onchange={(e) => onchange(e.currentTarget.value)} />
-      </div>
-
-      {#if numerico}
-        <button type="button" onclick={() => ajustar(1)}
-                aria-label="Aumentar {def.rotulo}">
-          <Plus size={22} strokeWidth={2.6} />
-        </button>
-      {/if}
+      <input
+        {id}
+        value={mostrado}
+        inputmode={def.tipo === "dinheiro" || def.tipo === "numero" ? "numeric" : "text"}
+        enterkeyhint="next"
+        autocomplete="off"
+        placeholder={def.tipo === "dinheiro" ? "0,00" : ""}
+        oninput={digitou} />
     </div>
   {/if}
 
-  {#if def.dica}<span class="dica">{def.dica}</span>{/if}
-</label>
+  {#if def.dica}<p class="dica">{def.dica}</p>{/if}
+</div>
 
 <style>
   .campo { display: grid; gap: var(--e2); }
   .rotulo { font-size: var(--t-p); font-weight: 600; color: var(--texto-fraco); }
-  .dica { font-size: var(--t-pp); color: var(--texto-fraquinho); line-height: 1.45; }
-
-  .linha { display: flex; gap: var(--e2); align-items: stretch; }
+  .dica { font-size: var(--t-pp); color: var(--texto-fraco); line-height: 1.45; }
 
   .entrada {
-    flex: 1;
     display: flex;
     align-items: center;
-    gap: var(--e1);
-    padding: 0 var(--e3);
+    gap: var(--e2);
+    padding: 0 var(--e4);
     min-height: var(--toque);
     background: var(--superficie);
     border: 1.5px solid var(--borda);
@@ -87,8 +107,8 @@
 
   .moeda {
     font-size: var(--t-p);
-    font-weight: 600;
-    color: var(--texto-fraquinho);
+    font-weight: 650;
+    color: var(--texto-fraco);
   }
 
   input {
@@ -98,33 +118,11 @@
     background: none;
     padding: 0;
     font-size: var(--t-base);
+    /* Dígito de largura fixa: o número não "dança" enquanto a máscara
+       recalcula a cada tecla. */
     font-variant-numeric: tabular-nums;
   }
   input:focus { outline: none; }
-
-  /* Os botões − e +.
-     Ajustar um preço sem abrir o teclado é a diferença entre corrigir na hora
-     e deixar pra depois. O alvo é o do dedo, não o do cursor. */
-  button {
-    flex: 0 0 var(--toque);
-    width: var(--toque);
-    min-height: var(--toque);
-    display: grid;
-    place-items: center;
-    background: var(--superficie-2);
-    border: 1.5px solid var(--borda);
-    border-radius: var(--raio);
-    color: var(--texto-fraco);
-    cursor: pointer;
-    transition: background var(--rapido) var(--curva),
-                transform var(--rapido) var(--curva);
-  }
-  button:active {
-    background: var(--acento-fraco);
-    border-color: var(--acento);
-    color: var(--acento-forte);
-    transform: scale(0.94);
-  }
 
   select {
     min-height: var(--toque);
