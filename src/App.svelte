@@ -101,6 +101,10 @@
     if (!p.mudou(original[aba], dados[aba])) return true;
     avisar("Salvando…", "trabalhando");
     try {
+      // A aba pode ainda não existir na planilha — é o caso da primeira
+      // viagem cadastrada. O Dário não deve precisar abrir o Google Sheets
+      // para começar a usar uma aba nova.
+      await sheets.garantirAba(CONFIG.SHEET_ID, aba);
       await sheets.salvarAba(CONFIG.SHEET_ID, aba,
                              $state.snapshot(dados[aba]));
       original[aba] = structuredClone($state.snapshot(dados[aba]));

@@ -105,8 +105,31 @@ export async function nomeDaPlanilha(sheetId) {
   }
 }
 
+/**
+ * Os nomes das abas que EXISTEM na planilha.
+ *
+ * Precisa existir porque o `batchGet` é tudo-ou-nada: se uma única faixa
+ * apontar para uma aba que não existe, a requisição inteira falha com 400 e o
+ * app mostra "Não consegui ler a planilha" — mesmo estando tudo certo com as
+ * outras cinco.
+ *
+ * Foi exatamente o que aconteceu ao nascer a aba de viagens: ela ainda não
+ * existia na planilha do Dário, e o site parou de ler qualquer coisa.
+ */
+export async function abasQueExistem(sheetId) {
+  const r = await chamar(sheetId, "?fields=sheets.properties.title");
+  return new Set((r.sheets || [])
+    .map((s) => String(s.properties?.title || "").trim())
+    .filter(Boolean));
+}
+
 export async function lerTudo(sheetId, abas) {
-  const faixas = abas
+  // Só as que existem. Pedir uma aba ausente derruba a leitura INTEIRA.
+  const existentes = await abasQueExistem(sheetId);
+  const pedir = abas.filter((a) => existentes.has(a));
+  if (pedir.length === 0) return Object.fromEntries(abas.map((a) => [a, []]));
+
+  const faixas = pedir
     .map((a) => `ranges=${encodeURIComponent(a)}!A1:Z200`)
     .join("&");
   // UNFORMATTED_VALUE: número volta como NÚMERO, não como texto formatado.
@@ -119,11 +142,34 @@ export async function lerTudo(sheetId, abas) {
   // o que adivinhar.
   const r = await chamar(
     sheetId, `/values:batchGet?${faixas}&valueRenderOption=UNFORMATTED_VALUE`);
-  const fora = {};
-  abas.forEach((aba, i) => {
-    fora[aba] = r.valueRanges[i].values || [];
+  // Aba que não existe volta VAZIA, não ausente: o app trata "vazia" como
+  // "ainda não preenchida", que é a verdade, e o Dário consegue cadastrar a
+  // primeira linha por lá.
+  const fora = Object.fromEntries(abas.map((a) => [a, []]));
+  pedir.forEach((aba, i) => {
+    fora[aba] = r.valueRanges[i]?.values || [];
   });
   return fora;
+}
+
+/**
+ * Cria a aba, se ela ainda não existir.
+ *
+ * O Dário não deve precisar abrir o Google Sheets para começar a usar uma aba
+ * nova: ele abre o site, preenche e salva. Sem isto, a primeira gravação numa
+ * aba inexistente falharia com 400 e ele veria "não consegui salvar" sem
+ * nenhuma pista do motivo.
+ */
+export async function garantirAba(sheetId, aba) {
+  const existentes = await abasQueExistem(sheetId);
+  if (existentes.has(aba)) return true;
+  await chamar(sheetId, ":batchUpdate", {
+    method: "POST",
+    body: JSON.stringify({
+      requests: [{ addSheet: { properties: { title: aba } } }],
+    }),
+  });
+  return true;
 }
 
 export async function salvarAba(sheetId, aba, linhas) {
