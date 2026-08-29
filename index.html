@@ -3,54 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#8a6212">
-<meta name="description" content="Preços do frete — edite a tabela do robô Dário pelo celular.">
+<meta name="theme-color" content="#f7f7f6">
+<meta name="description" content="Preços do frete: edite a tabela do robô Dário pelo celular.">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Preços do Frete</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚚</text></svg>">
-<link rel="stylesheet" href="estilo.css">
+<link rel="manifest" href="/manifest.json">
+<!--
+  Favicon em SVG, traço, sem emoji.
+  Emoji tem desenho diferente em cada aparelho e não aceita cor: nunca foi
+  ícone, só parecia. Este é o caminhão do Lucide, inline pra não custar
+  requisição.
+-->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6212' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2'/%3E%3Cpath d='M15 18H9'/%3E%3Cpath d='M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14'/%3E%3Ccircle cx='17' cy='18' r='2'/%3E%3Ccircle cx='7' cy='18' r='2'/%3E%3C/svg%3E">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-
-<!-- Entrada: uma coisa só na tela. -->
-<section id="entrada">
-  <div class="selo-grande">🚚</div>
-  <h2>Preços do Frete</h2>
-  <p>Aqui você ajusta os valores que o Dário usa para fazer os orçamentos.</p>
-  <button class="btn btn-primario" id="btn-entrar">Entrar com o Google</button>
-  <p id="erro-entrada" style="color:#a52519;font-weight:600;margin-top:14px"></p>
-  <p class="rodape">Seus dados ficam na sua planilha. Este site não guarda nada.</p>
-</section>
-
-<!-- Aplicativo -->
-<div id="app" class="escondido">
-  <header>
-    <div class="topo">
-      <div class="selo">🚚</div>
-      <div style="min-width:0">
-        <h1>Preços do Frete</h1>
-        <div class="conta" id="conta"></div>
-      </div>
-      <button class="sair" id="btn-sair" title="Sair" aria-label="Sair">⏻</button>
-    </div>
-  </header>
-
-  <main id="conteudo"></main>
-
-  <nav id="abas" role="tablist">
-    <button role="tab" data-aba="precos_km"      aria-selected="true"><span class="icone">🛣️</span>Por km</button>
-    <button role="tab" data-aba="nao_transporto" aria-selected="false"><span class="icone">🚫</span>Não levo</button>
-    <button role="tab" data-aba="precos_cidade"  aria-selected="false"><span class="icone">🏙️</span>Cidades</button>
-    <button role="tab" data-aba="caminhoes"      aria-selected="false"><span class="icone">🚚</span>Caminhões</button>
-    <button role="tab" data-aba="fragilidade"    aria-selected="false"><span class="icone">🥂</span>Frágil</button>
-  </nav>
-</div>
-
-<div id="aviso" role="status" aria-live="polite"></div>
-
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="config.js"></script>
-<script src="app.js"></script>
+<div id="app"></div>
+<script type="module" src="/src/main.js"></script>
 </body>
 </html>

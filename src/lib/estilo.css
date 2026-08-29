@@ -1,0 +1,39 @@
+@import "./tokens.css";
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--fonte);
+  font-size: var(--t-base);
+  line-height: 1.5;
+  color: var(--texto);
+  background: var(--fundo);
+  /* O aparelho dele tem entalhe. Sem isto o cabeçalho fica embaixo dele. */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { margin: 0; font-weight: 650; letter-spacing: -0.015em; }
+h1 { font-size: var(--t-g); }
+h2 { font-size: var(--t-gg); }
+p { margin: 0; }
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* Foco visível SEMPRE. Ninguém navega isto por teclado hoje, mas foco
+   invisível é o tipo de coisa que ninguém nota até precisar. */
+:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 2px;
+  border-radius: var(--raio-p);
+}
+
+.sr {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}

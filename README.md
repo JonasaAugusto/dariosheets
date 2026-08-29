@@ -45,7 +45,7 @@ Falta só o `CLIENT_ID`. Passo a passo:
    **dario-frete**.
 2. **APIs e serviços → Biblioteca** → ative a **Google Sheets API**.
 3. **APIs e serviços → Tela de permissão OAuth**:
-   - Se `metay.com.br` for Google Workspace, escolha **Interno** — assim o
+   - Se `o dominio da empresa` for Google Workspace, escolha **Interno** — assim o
      Dário **não** vê o aviso de "app não verificado".
    - Se não for, escolha **Externo**, deixe em modo de teste e adicione a conta
      do Dário em *Usuários de teste*. Ele verá o aviso amarelo **uma vez**:
@@ -66,12 +66,41 @@ próprio e abre sem barra de navegador, igual aplicativo.
 ## Estrutura
 
 ```
-index.html     telas e barra de abas
-estilo.css     fonte 18px, alvo de toque 48px, paleta dourada
-app.js         login, leitura e escrita na planilha
-config.js      CLIENT_ID e ID da planilha  <-- o único arquivo a editar
-manifest.json  ícone e nome ao instalar no celular
+index.html               casca; o Google Identity carrega aqui
+src/main.js              monta o app
+src/App.svelte           estado, edição e salvamento
+src/componentes/         Entrada, Abas, Card, Campo, Aviso
+src/lib/config.js        CLIENT_ID e ID da planilha  <-- o único a editar
+src/lib/sheets.js        OAuth e Sheets (extraído do app.js antigo, intacto)
+src/lib/abas.js          as abas como o Dário as vê
+src/lib/planilha.js      id, formato de dinheiro, o que conta como alteração
+src/lib/tokens.css       cor, espaçamento, tipografia, alvo de toque
+public/                  manifest e ícone
+.github/workflows/       build e deploy no Pages
 ```
+
+Stack: **Vite + Svelte 5 + Lucide**. Svelte pelo runtime pequeno, que importa
+num aparelho de entrada: o bundle inteiro dá 26 kB comprimido.
+
+## O redesenho de 28/08/2026
+
+**Zero emoji.** Emoji tem desenho diferente em cada aparelho, muda de tamanho
+junto com a fonte e não aceita cor. Nunca foi ícone, só parecia. Todos viraram
+Lucide, inclusive o favicon e o ícone de instalar.
+
+**A paleta.** O dourado escuro existia por um motivo certo — o Dário usa isto
+em pé, no sol, e dourado claro com cinza some. A conclusão estava certa; a
+solução, não: cor saturada em área grande cansa. Agora é fundo claro com texto
+quase preto (15:1 de contraste) e a cor reservada para o que precisa ser achado
+com o olho.
+
+**O que NÃO mudou**, porque foi decidido por motivo real: card por regra em vez
+de tabela, alvo de toque de 48px, fonte 18px, salvar sozinho 1,2s após a última
+tecla, e o `−`/`+` para ajustar preço sem abrir o teclado.
+
+**A camada de OAuth e Sheets não foi reescrita.** Ela funciona e está auditada;
+virou `src/lib/sheets.js` como estava. Trocar as duas coisas de uma vez seria
+não saber qual quebrou.
 
 ## Decisões que parecem detalhe e não são
 

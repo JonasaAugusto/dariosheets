@@ -1,0 +1,19 @@
+{
+  "name": "Preços do Frete",
+  "short_name": "Preços",
+  "description": "Edite a tabela de preços do robô Dário pelo celular.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7f6",
+  "theme_color": "#f7f7f6",
+  "icons": [
+    {
+      "src": "icone.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

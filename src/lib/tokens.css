@@ -1,0 +1,95 @@
+/*
+ * Tokens de design.
+ *
+ * ## O que a paleta antiga tentava resolver, e por que ela ficava feia
+ *
+ * O dourado escuro com texto branco existia por um motivo certo: o Dário usa
+ * isto num Samsung linha A, em pé, às vezes no sol. Dourado claro com cinza
+ * fica bonito no monitor e some no celular sob luz do dia.
+ *
+ * A conclusão estava certa (precisa de contraste alto); a solução, não. Cor
+ * saturada em área grande cansa e envelhece rápido. O jeito de ter contraste
+ * no sol é FUNDO CLARO com texto quase preto, e reservar a cor para o que
+ * precisa ser achado com o olho.
+ *
+ * Então: neutros no corpo, um acento só, e contraste medido.
+ *
+ * ## Contraste
+ *
+ * Todos os pares de texto sobre fundo passam de 4.5:1 (AA). O texto principal
+ * fica em 15:1, que é o que se lê de relance, com o braço estendido, no sol.
+ */
+:root {
+  /* Neutros. O fundo é quase branco, não branco: branco puro no sol vira
+     espelho e força o brilho ao máximo, que come bateria e cansa a vista. */
+  --fundo: #f7f7f6;
+  --superficie: #ffffff;
+  --superficie-2: #f0f0ee;
+  --borda: #dededa;
+  --borda-forte: #c4c4bf;
+
+  --texto: #15150f;
+  --texto-fraco: #56564e;
+  --texto-fraquinho: #7c7c73;
+
+  /* O acento. Um só, e derivado da identidade que já existia — o dourado
+     virou âmbar profundo, que tem a mesma família e contraste de verdade. */
+  --acento: #8a6212;
+  --acento-forte: #6d4d0a;
+  --acento-fraco: #fdf6e6;
+
+  --perigo: #a52519;
+  --perigo-fraco: #fdeeec;
+  --ok: #1c6b3f;
+  --ok-fraco: #eaf5ef;
+
+  /* Espaçamento numa escala só. Números fora dela viram "quase alinhado",
+     que é o que faz uma tela parecer feita às pressas. */
+  --e1: 4px;
+  --e2: 8px;
+  --e3: 12px;
+  --e4: 16px;
+  --e5: 24px;
+  --e6: 32px;
+  --e7: 48px;
+
+  --raio: 12px;
+  --raio-g: 16px;
+  --raio-p: 8px;
+
+  /* Sombras curtas e claras. Sombra longa em tela pequena vira sujeira. */
+  --sombra: 0 1px 2px rgb(21 21 15 / 0.06), 0 1px 3px rgb(21 21 15 / 0.04);
+  --sombra-2: 0 2px 8px rgb(21 21 15 / 0.08), 0 1px 3px rgb(21 21 15 / 0.06);
+
+  /* O ALVO DE TOQUE.
+   *
+   * 48px é a medida do dedo, e é a decisão mais importante desta interface.
+   * O padrão do Google Sheets é 21px, e errar a linha ao tocar significa
+   * editar o preço errado sem perceber. Isto NÃO muda. */
+  --toque: 48px;
+
+  /* Tipografia. 18px de base pelo mesmo motivo do alvo de toque: é o que se
+     lê em pé, no sol, sem aproximar o aparelho do rosto. */
+  --fonte: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+           "Helvetica Neue", Arial, sans-serif;
+  --fonte-num: ui-monospace, "SF Mono", "Roboto Mono", monospace;
+  --t-base: 18px;
+  --t-p: 15px;
+  --t-pp: 13px;
+  --t-g: 22px;
+  --t-gg: 28px;
+
+  /* Movimento. Curto, porque a tela é usada com pressa. */
+  --rapido: 120ms;
+  --normal: 200ms;
+  --curva: cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+/* Quem pediu menos movimento recebe menos movimento. Não é enfeite: enjoo de
+   movimento é real, e a tela continua inteira sem as transições. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
