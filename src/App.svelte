@@ -203,7 +203,15 @@
       dados[abaAtual] = [...dados[abaAtual], montar(null)];
     } else {
       const i = indiceReal(editando);
-      if (i >= 0) dados[abaAtual][i] = montar(dados[abaAtual][i]);
+      if (i < 0) {
+        // A linha sumiu debaixo do formulário: alguém recarregou a planilha
+        // enquanto isto estava aberto. Gravar em posição adivinhada seria pior
+        // que não gravar, mas SUMIR EM SILÊNCIO é o que não se faz.
+        avisar("A lista mudou. Confira em salvas e tente de novo.", "erro", 4000);
+        limparRascunho();
+        return;
+      }
+      dados[abaAtual][i] = montar(dados[abaAtual][i]);
     }
 
     if (await gravar(abaAtual)) {
@@ -226,7 +234,12 @@
 
   async function trocarAba(chave) {
     clearTimeout(relogioSalvar);
-    await gravar(abaAtual);
+
+    // Se não gravou, NÃO troca. Trocar apagaria o rascunho e trocaria a tela,
+    // e o Dário sairia da aba achando que salvou — a perda mais silenciosa
+    // que este app poderia ter.
+    if (!(await gravar(abaAtual))) return;
+
     limparRascunho();
     acabouDeSalvar = false;
     salvosAberto = false;

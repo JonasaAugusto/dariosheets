@@ -22,6 +22,7 @@
 
   function digitou(e) {
     const cru = e.currentTarget.value;
+    const numerico = def.tipo === "dinheiro" || def.tipo === "numero";
 
     if (def.tipo === "dinheiro") {
       // A máscara roda a cada tecla: só os dígitos contam, e o último par é
@@ -36,16 +37,22 @@
       onchange(cru);
     }
 
-    // O DOM é reescrito pelo `mostrado` derivado na próxima renderização.
-    // Mas o CURSOR não volta sozinho: sem isto ele pula para o começo a cada
-    // tecla, porque o texto mudou de tamanho ao ganhar a vírgula.
+    // SÓ NOS CAMPOS COM MÁSCARA.
     //
-    // Fim da linha é onde ele tem que ficar: a máscara só cresce pela
-    // direita, então digitar é sempre acrescentar no fim.
+    // A máscara reescreve o texto a cada tecla, e o cursor não volta sozinho:
+    // sem isto ele pula para o começo, porque o texto mudou de tamanho ao
+    // ganhar a vírgula. Como a máscara só cresce pela direita, o fim é o
+    // lugar certo.
+    //
+    // Em campo de TEXTO isso seria o oposto de ajudar: quem corrige
+    // "Belo Horizonet" posiciona o cursor no meio, e cada tecla o puxaria de
+    // volta para o fim. Ficaria impossível editar o que já está escrito.
+    if (!numerico) return;
+
     const campo = e.currentTarget;
     queueMicrotask(() => {
       const n = campo.value.length;
-      try { campo.setSelectionRange(n, n); } catch { /* select não tem */ }
+      try { campo.setSelectionRange(n, n); } catch { /* nem todo campo tem */ }
     });
   }
 </script>

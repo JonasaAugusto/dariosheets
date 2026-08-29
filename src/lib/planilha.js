@@ -52,17 +52,54 @@ export function novoId(aba, prefixos, cabecalho, corpo) {
 // Tudo em centavos inteiros. Float para dinheiro soma errado, e aqui a soma
 // vira cobrança de verdade.
 
-/** Qualquer coisa que veio da planilha (número ou texto) vira centavos. */
+/**
+ * Qualquer coisa que veio da planilha (número ou texto) vira centavos.
+ *
+ * ## Por que não é `Math.round(valor * 100)`
+ *
+ * Porque erra, e erra em dinheiro:
+ *
+ *     Math.round(1.005 * 100)  ->  100   (o certo é 101)
+ *
+ * `1.005` não existe em IEEE-754: o que existe é `1.00499999999999989...`, e
+ * multiplicar por 100 dá `100.49999999999999`. Um centavo some, em silêncio,
+ * numa tabela de onde sai cobrança.
+ *
+ * O conserto é não multiplicar float nenhum. A representação decimal do
+ * número em texto é exata (`(1.005).toString() === "1.005"`), então basta
+ * mover a vírgula duas casas e arredondar a terceira à mão.
+ */
 export function paraCentavos(valor) {
   if (valor === null || valor === undefined || valor === "") return null;
-  if (typeof valor === "number") return Math.round(valor * 100);
 
-  let s = String(valor).trim().replace(/^R\$\s*/i, "").replace(/\s/g, "");
-  if (!s) return null;
-  // A vírgula manda quando existe: "1.234,56" é pt-BR, "1234.56" é en.
-  s = s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s;
-  const n = Number.parseFloat(s);
-  return Number.isNaN(n) ? null : Math.round(n * 100);
+  let s;
+  if (typeof valor === "number") {
+    if (!Number.isFinite(valor)) return null;
+    // Notação científica (1e-7, 1e21) não tem vírgula para mover.
+    s = Math.abs(valor) < 1e21 && Math.abs(valor) >= 1e-6
+      ? valor.toFixed(10).replace(/0+$/, "").replace(/\.$/, "")
+      : String(valor);
+    if (s.includes("e") || s.includes("E")) return Math.round(valor * 100);
+  } else {
+    s = String(valor).trim().replace(/^R\$\s*/i, "").replace(/\s/g, "");
+    if (!s) return null;
+    // A vírgula manda quando existe: "1.234,56" é pt-BR, "1234.56" é en.
+    s = s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s;
+  }
+
+  const casa = /^(-?)(\d*)(?:\.(\d*))?$/.exec(s);
+  if (!casa) return null;
+  const [, sinal, inteiro, decimal = ""] = casa;
+  if (!inteiro && !decimal) return null;
+
+  const centavos = Number.parseInt((inteiro || "0") + decimal.slice(0, 2).padEnd(2, "0"), 10);
+  if (Number.isNaN(centavos)) return null;
+
+  // A terceira casa decide, e "meio para cima" é a regra que o resto do
+  // sistema usa (ver `dario/dominio/dinheiro.py`).
+  const terceira = Number.parseInt(decimal[2] ?? "0", 10) || 0;
+  const arredondado = centavos + (terceira >= 5 ? 1 : 0);
+  return sinal === "-" ? -arredondado : arredondado;
 }
 
 /** Centavos viram "1.234,56". Sem o "R$": ele fica fora do campo. */
