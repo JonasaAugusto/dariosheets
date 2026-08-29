@@ -126,13 +126,36 @@
 
   // ---- a aba de valor único ---------------------------------------------
 
+  /**
+   * Garante que o cabeçalho tem TODAS as colunas que esta aba usa.
+   *
+   * Sem isto, campo novo aparecia na tela e não gravava nada: o app escrevia
+   * por cima do cabeçalho velho, que não tinha a coluna, e o valor sumia sem
+   * erro. Foi o que aconteceu quando nasceram "Frete dentro de Juiz de Fora"
+   * e as duas caixas de desconto.
+   *
+   * A coluna nova vai no FIM, e as que já existem ficam onde estão: mudar a
+   * ordem de coluna que o Dário já usa é reorganizar a planilha dele sem
+   * pedir.
+   */
+  function garantirColunas() {
+    if (linhas.length === 0) {
+      dados[abaAtual] = [[...CONTROLE, ...def.campos.map((c) => c.campo)]];
+      return;
+    }
+    const atual = p.cabecalhoDe(linhas);
+    const faltando = [...CONTROLE, ...def.campos.map((c) => c.campo)]
+      .filter((nome) => !atual.includes(nome));
+    if (faltando.length === 0) return;
+
+    // Cabeçalho novo e cada linha ganha as células vazias correspondentes.
+    dados[abaAtual] = linhas.map((linha, i) =>
+      i === 0 ? [...linha, ...faltando] : [...linha, ...faltando.map(() => "")]);
+  }
+
   /** A linha única desta aba, criada na hora se ainda não existir. */
   function garantirLinhaUnica() {
-    if (linhas.length === 0) {
-      // Sem cabeçalho não dá para saber onde escrever. Monta a aba do zero,
-      // com as colunas de controle na frente.
-      dados[abaAtual] = [[...CONTROLE, ...def.campos.map((c) => c.campo)]];
-    }
+    garantirColunas();
     if ((dados[abaAtual] ?? []).length < 2) {
       const cab = p.cabecalhoDe(dados[abaAtual]);
       dados[abaAtual] = [...dados[abaAtual], cab.map((c) =>
@@ -189,11 +212,9 @@
   async function salvarRascunho() {
     if (!temRascunho) return;
 
-    // Sem cabeçalho a aba não existe ainda na planilha. Cria com as colunas
-    // certas — é o que permite a aba de viagens nascer vazia e funcionar.
-    if (linhas.length === 0) {
-      dados[abaAtual] = [[...CONTROLE, ...def.campos.map((c) => c.campo)]];
-    }
+    // Sem cabeçalho a aba não existe ainda na planilha; e se existir, pode
+    // estar sem alguma coluna nova. As duas coisas resolvem no mesmo lugar.
+    garantirColunas();
     const cab = p.cabecalhoDe(dados[abaAtual]);
 
     const montar = (base) => cab.map((coluna, i) => {
